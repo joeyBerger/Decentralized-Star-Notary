@@ -8,30 +8,45 @@ contract('StarNotary', accounts => {
     
     describe('can create a star', () => { 
         it('can create a star and get its name', async function () { 
-            
-            await this.contract.createStar('awesome star!', 1, {from: accounts[0]})
+            let tokenId = 1
 
-            assert.equal(await this.contract.tokenIdToStarInfo(1), 'awesome star!')
+            await this.contract.createStar('Awesome Star!', "Story", "Ra", "Dec", "Mag", tokenId, {from: accounts[0]})
+
+            assert.equal(await this.contract.tokenIdToStarInfo(tokenId),'Awesome Star!', "Story", "Ra", "Dec", "Mag", "Not equal here")
         })
     })
 
     describe('buying and selling stars', () => { 
+
         let user1 = accounts[1]
         let user2 = accounts[2]
-        let randomMaliciousUser = accounts[3]
-        
+
         let starId = 1
         let starPrice = web3.toWei(.01, "ether")
 
-        beforeEach(async function () { 
-            await this.contract.createStar('awesome star!', starId, {from: user1})    
+        beforeEach(async function () {
+            await this.contract.createStar('awesome star', starId, {from: user1})
         })
 
-        it('user1 can put up their star for sale', async function () { 
-            assert.equal(await this.contract.ownerOf(starId), user1)
-            await this.contract.putStarUpForSale(starId, starPrice, {from: user1})
+        describe('user1 can sell a star', () => { 
+            it('user1 can put up their star for sale', async function () { 
+                await this.contract.putStarUpForSale(starId, starPrice, {from: user1})
             
-            assert.equal(await this.contract.starsForSale(starId), starPrice)
+                assert.equal(await this.contract.starsForSale(starId), starPrice)
+            })
+
+            it('user1 gets the funds after selling a star', async function () { 
+                let starPrice = web3.toWei(.05, 'ether')
+                
+                await this.contract.putStarUpForSale(starId, starPrice, {from: user1})
+
+                let balanceOfUser1BeforeTransaction = web3.eth.getBalance(user1)
+                await this.contract.buyStar(starId, {from: user2, value: starPrice})
+                let balanceOfUser1AfterTransaction = web3.eth.getBalance(user1)
+
+                assert.equal(balanceOfUser1BeforeTransaction.add(starPrice).toNumber(), 
+                            balanceOfUser1AfterTransaction.toNumber())
+            })
         })
 
         describe('user2 can buy a star that was put up for sale', () => { 
@@ -39,18 +54,20 @@ contract('StarNotary', accounts => {
                 await this.contract.putStarUpForSale(starId, starPrice, {from: user1})
             })
 
-            it('user2 is the owner of the star after they buy it', async function() { 
-                await this.contract.buyStar(starId, {from: user2, value: starPrice, gasPrice: 0})
+            it('user2 is the owner of the star after they buy it', async function () { 
+                await this.contract.buyStar(starId, {from: user2, value: starPrice})
+
                 assert.equal(await this.contract.ownerOf(starId), user2)
             })
 
-            it('user2 ether balance changed correctly', async function () { 
+            it('user2 correctly has their balance changed', async function () { 
                 let overpaidAmount = web3.toWei(.05, 'ether')
-                const balanceBeforeTransaction = web3.eth.getBalance(user2)
-                await this.contract.buyStar(starId, {from: user2, value: overpaidAmount, gasPrice: 0})
-                const balanceAfterTransaction = web3.eth.getBalance(user2)
 
-                assert.equal(balanceBeforeTransaction.sub(balanceAfterTransaction), starPrice)
+                const balanceOfUser2BeforeTransaction = web3.eth.getBalance(user2)
+                await this.contract.buyStar(starId, {from: user2, value: overpaidAmount, gasPrice:0})
+                const balanceAfterUser2BuysStar = web3.eth.getBalance(user2)
+
+                assert.equal(balanceOfUser2BeforeTransaction.sub(balanceAfterUser2BuysStar), starPrice)
             })
         })
     })
