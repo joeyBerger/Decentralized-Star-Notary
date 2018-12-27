@@ -1,15 +1,11 @@
-pragma solidity ^0.4 .23;
+pragma solidity ^0.4.23;
 
 import './ERC721Token.sol';
 
-contract StarNotary is ERC721Token {
+contract StarNotary is ERC721Token { 
 
-    // struct Star { 
-    //     string name;
-    // }
-
-    // bytes32[] dynamicBoolArray;
-
+    event LogCoinsSent(uint amount1, uint amount);
+    
     struct Star {
         string name;
         string starStory;
@@ -22,25 +18,36 @@ contract StarNotary is ERC721Token {
 
     mapping(uint256 => uint256) public starsForSale;
 
-    function createStar(string _name, string _starStory, string _ra, string _dec, string _mag, uint256 _tokenId) public {
-        Star memory newStar = Star(_name, _starStory, _ra, _dec, _mag);
-        //var starDoesNotAlreadyExist = checkIfStarExists(_tokenId);
-        var starDoesNotAlreadyExist = true;
-        if (starDoesNotAlreadyExist) {
-            tokenIdToStarInfo[_tokenId] = newStar;
+    mapping(string => bool) private registeredCoordinates;
 
-            ERC721Token.mint(_tokenId);
-        }
+    uint256 public totalStarsForSale;
+
+    uint256[] public currentStarsForSale;
+
+    function createStar(string _name, string _starStory, string _ra, string _dec, string _mag, uint256 _tokenId) public { 
+        //Star memory newStar = Star(_name);
+        Star memory newStar = Star(_name, _starStory, _ra, _dec, _mag);
+
+        bool starDoesNotExist = checkIfStarExists(_ra, _dec, _mag);
+        require(starDoesNotExist == false, "Star already exists");       
+
+        registerStarCoordinates(_ra, _dec, _mag);
+
+        tokenIdToStarInfo[_tokenId] = newStar;
+
+        ERC721Token.mint(_tokenId);
     }
 
-    function putStarUpForSale(uint256 _tokenId, uint256 _price) public {
+    function putStarUpForSale(uint256 _tokenId, uint256 _price) public { 
         require(this.ownerOf(_tokenId) == msg.sender);
 
-        //perhaps make sure price is greater than zero
         starsForSale[_tokenId] = _price;
+
+        //added
+        currentStarsForSale.push(_tokenId);
     }
 
-    function buyStar(uint256 _tokenId) public payable {
+    function buyStar(uint256 _tokenId) public payable { 
         require(starsForSale[_tokenId] > 0);
 
         uint256 starCost = starsForSale[_tokenId];
@@ -52,7 +59,7 @@ contract StarNotary is ERC721Token {
 
         transferFromHelper(starOwner, msg.sender, _tokenId);
 
-        if (msg.value > starCost) {
+        if (msg.value > starCost) { 
             msg.sender.transfer(msg.value - starCost);
         }
 
@@ -65,32 +72,57 @@ contract StarNotary is ERC721Token {
 
         //clear being on sale 
         starsForSale[_tokenId] = 0;
+
+        //clear record of available stars
+        for (uint i = 0; i < currentStarsForSale.length; i++) {
+            if (currentStarsForSale[i] == _tokenId) {
+                delete currentStarsForSale[i];
+                break;
+            }
+        }      
     }
 
-    // getApproved     in ERC721
- 
-    // isApprovedForAll   in ERC721
+    function checkIfStarExists(string _ra, string _dec, string _mag) private view returns (bool) {       
+        string memory concatenatedString = concatenateStarCoordinates(_ra, _dec, _mag);
+        return registeredCoordinates[string(concatenatedString)];
+    }
 
-    // ownerOf  in ERC721
+    function registerStarCoordinates(string _ra, string _dec, string _mag) private { 
+        string memory concatenatedString = concatenateStarCoordinates(_ra, _dec, _mag);
+        registeredCoordinates[string(concatenatedString)] = true;
+    }
 
-    function checkIfStarExists(uint256 _tokenId) private view returns (bool) {
+    function allStarsForSale() public view returns (uint256[]) {
+        return currentStarsForSale;
+    }
 
-        for (uint i = _tokenId-1; i >= 0; i--) {
-            uint matches = 0;
-            if (keccak256(tokenIdToStarInfo[i].ra) == keccak256(tokenIdToStarInfo[_tokenId].ra)){matches++;} 
-            if (keccak256(tokenIdToStarInfo[i].dec) == keccak256(tokenIdToStarInfo[_tokenId].dec)){matches++;} 
-            if (keccak256(tokenIdToStarInfo[i].mag) == keccak256(tokenIdToStarInfo[_tokenId].mag)){matches++;} 
-            //if (matches == 3) {return false;}
-            require(matches != 3, "The Star Coordinates Provided Already Exist!");
+    function testFunc1(uint v) public view returns (string) {
+        uint maxlength = 100;
+        bytes memory reversed = new bytes(maxlength);
+        uint i = 0;
+        while (v != 0) {
+            uint remainder = v % 10;
+            v = v / 10;
+            reversed[i++] = byte(48 + remainder);
         }
-        return true;  //I think this is always going to return true
+        bytes memory s = new bytes(i + 1);
+        for (uint j = 0; j <= i; j++) {
+            s[j] = reversed[i - j];
+        }
+        string memory str = string(s);
+        return str;
     }
-    
 
-    // function starsForSale() public view returns () {
-    //     starsForSale
-    // }
-
+    function concatenateStarCoordinates(string _ra, string _dec, string _mag) private view returns (string) {  
+        string memory strLength = new string(bytes(_ra).length + bytes(_dec).length + bytes(_mag).length);
+        bytes memory returnString = bytes(strLength);
+        uint k = 0;
+        for (uint i = 0; i < bytes(_ra).length; i++) {returnString[k++] = bytes(_ra)[i];}
+        for (i = 0; i < bytes(_dec).length; i++) {returnString[k++] = bytes(_dec)[i];}
+        for (i = 0; i < bytes(_mag).length; i++) {returnString[k++] = bytes(_mag)[i];}
+        
+        return string(returnString);
+    }
     
     function tokenIdToStarInfo(uint256 _tokenId) public view returns (string, string, string, string, string) {
         Star memory returnStar = tokenIdToStarInfo[_tokenId];

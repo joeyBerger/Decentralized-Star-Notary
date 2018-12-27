@@ -9,10 +9,22 @@ contract('StarNotary', accounts => {
     describe('can create a star', () => { 
         it('can create a star and get its name', async function () { 
             let tokenId = 1
+            var starMembers = ['Awesome Star!','Story','Ra','Dec','Mag'];
+            await this.contract.createStar(starMembers[0], starMembers[1], starMembers[2], starMembers[3], starMembers[4], tokenId, {from: accounts[0]})
+            async function testStarInfoArr() {
+                var infoArr = await this.contract.tokenIdToStarInfo(tokenId);
+                for (var i = 0; i < starMembers.length; i++) {
+                    assert.equal(infoArr[i], starMembers[i])
+                }
+              }       
+              testStarInfoArr();
+        })
 
-            await this.contract.createStar('Awesome Star!', "Story", "Ra", "Dec", "Mag", tokenId, {from: accounts[0]})
-
-            assert.equal(await this.contract.tokenIdToStarInfo(tokenId),'Awesome Star!', "Story", "Ra", "Dec", "Mag", "Not equal here")
+        it ('cannot create new star with same coordinates', async function () {
+            let tokenId = 1
+            await this.contract.createStar('Awesome Star!',"Story","Ra","Dec","Mag", tokenId, {from: accounts[0]})
+            await expectThrow(this.contract.createStar('Awesome Star!',"Story","Ra","Dec","Mag", tokenId+1, {from: accounts[1]}))
+            
         })
     })
 
@@ -25,7 +37,7 @@ contract('StarNotary', accounts => {
         let starPrice = web3.toWei(.01, "ether")
 
         beforeEach(async function () {
-            await this.contract.createStar('awesome star', starId, {from: user1})
+            await this.contract.createStar('Awesome Star!',"Story","Ra","Dec","Mag", starId, {from: user1})
         })
 
         describe('user1 can sell a star', () => { 
@@ -33,6 +45,16 @@ contract('StarNotary', accounts => {
                 await this.contract.putStarUpForSale(starId, starPrice, {from: user1})
             
                 assert.equal(await this.contract.starsForSale(starId), starPrice)
+            })
+
+            it('total stars for sale is correct', async function () {
+                await this.contract.putStarUpForSale(starId, starPrice, {from: user1})
+                let returnObj = await this.contract.allStarsForSale();
+                let totalStarsForSale = [];
+                totalStarsForSale.push(starId);
+                for (var i = 0; i < returnObj.length; i++) {
+                    assert.equal(totalStarsForSale[i],returnObj[i].c[0]);
+                }              
             })
 
             it('user1 gets the funds after selling a star', async function () { 
@@ -72,3 +94,14 @@ contract('StarNotary', accounts => {
         })
     })
 })
+
+var expectThrow = async function(promise) { 
+    try { 
+        await promise
+    } catch (error) { 
+        assert.exists(error)
+        return
+    }
+
+    assert.fail('Expected an error but didnt see one!')
+}
