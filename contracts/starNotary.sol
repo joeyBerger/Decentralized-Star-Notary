@@ -9,8 +9,9 @@ contract StarNotary is ERC721 {
     }
 
 //  Add a name and a symbol for your starNotary tokens
+    string public constant name = "JBNS";
+    string public constant symbol = "🌟";
 
-//
     mapping(uint256 => Star) public tokenIdToStarInfo;
     mapping(uint256 => uint256) public starsForSale;
 

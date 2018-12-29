@@ -64,17 +64,8 @@ contract('StarNotary', async (accs) => {
   });
 
   it('token name and token symbol are added properly', async() => {
-    // let user1 = accounts[1]
-    // let user2 = accounts[2]
-    // let starId = 5
-    // let starPrice = web3.toWei(.01, "ether")
-    // await instance.createStar('awesome star', starId, {from: user1})
-    // await instance.putStarUpForSale(starId, starPrice, {from: user1})
-    // let balanceOfUser1BeforeTransaction = web3.eth.getBalance(user2)
-    // const balanceOfUser2BeforeTransaction = web3.eth.getBalance(user2)
-    // await instance.buyStar(starId, {from: user2, value: starPrice, gasPrice:0})
-    // const balanceAfterUser2BuysStar = web3.eth.getBalance(user2)
-    // assert.equal(balanceOfUser2BeforeTransaction.sub(balanceAfterUser2BuysStar), starPrice);
+      assert.equal(await instance.name(), 'JBNS');
+      assert.equal(await instance.symbol(), '🌟');
   });
 
   it('users can exchange their stars', async() => {
