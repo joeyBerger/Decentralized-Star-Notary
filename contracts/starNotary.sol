@@ -8,9 +8,8 @@ contract StarNotary is ERC721 {
         string name;
     }
 
-//  Add a name and a symbol for your starNotary tokens
-    string public constant name = "JBNS";
-    string public constant symbol = "🌟";
+    string public constant name = "Joey Berger Notarized Star";
+    string public constant symbol = "JBNS";
 
     mapping(uint256 => Star) public tokenIdToStarInfo;
     mapping(uint256 => uint256) public starsForSale;
@@ -55,8 +54,6 @@ contract StarNotary is ERC721 {
         starsForSale[_tokenId] = 0;
       }
 
-// Add a function called exchangeStars, so 2 users can exchange their star tokens...
-//Do not worry about the price, just write code to exchange stars between users.
     function exchangeStars(uint256 _firstUserTokenId, uint256 _secondUserTokenId) public {
         //make sure both stars exist
         require(bytes(tokenIdToStarInfo[_firstUserTokenId].name).length > 0);
@@ -68,11 +65,7 @@ contract StarNotary is ERC721 {
         tokenIdToStarInfo[_firstUserTokenId] = tokenIdToStarInfo[_secondUserTokenId];
         tokenIdToStarInfo[_secondUserTokenId] = tempStar;
     }
-//
 
-// Write a function to Transfer a Star. The function should transfer a star from the address of the caller.
-// The function should accept 2 arguments, the address to transfer the star to, and the token ID of the star.
-//
     function transferStar(address _transferAddress, uint256 _tokenId) public {
         //make sure star exists
         require(bytes(tokenIdToStarInfo[_tokenId].name).length > 0);

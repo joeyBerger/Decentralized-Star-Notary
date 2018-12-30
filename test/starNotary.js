@@ -64,8 +64,8 @@ contract('StarNotary', async (accs) => {
   });
 
   it('token name and token symbol are added properly', async() => {
-      assert.equal(await instance.name(), 'JBNS');
-      assert.equal(await instance.symbol(), '🌟');
+      assert.equal(await instance.name(), 'Joey Berger Notarized Star');
+      assert.equal(await instance.symbol(), 'JBNS');
   });
 
   it('users can exchange their stars', async() => {

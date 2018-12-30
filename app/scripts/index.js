@@ -35,13 +35,14 @@ const lookupStar = async () => {
     else {
       App.setStatus("The Star's Name At Star ID " + id + " Is '" + starName + "'.");
     }
-    // let starName = await instance.lookUptokenIdToStarInfo(id, {from: account});
-    // if (!starName) {
-    //   App.setStatus("No Star Exists At Star ID " + id + ".");
-    // }
-    // else {
-    //   App.setStatus("The Star's Name At Star ID " + id + " Is '" + starName + "'.");
-    // }
+}
+
+const transferStar = async () => {
+  const instance = await StarNotary.deployed();
+  const id = document.getElementById("starIdTransfer").value;
+  const transferAddress = document.getElementById("transferAddress").value;
+  App.setStatus("");
+  instance.transferStar(transferAddress,id,{from: account});  
 }
 
 const App = {
@@ -80,6 +81,10 @@ const App = {
 
   lookupStar: function () {
     lookupStar();
+  },
+
+  transferStar: function () {
+    transferStar();
   },
 
 }
